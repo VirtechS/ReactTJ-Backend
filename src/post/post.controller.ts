@@ -6,10 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { query } from 'express';
+import { SearchPostDto } from './dto/search-post.dto';
 
 @Controller('posts')
 export class PostController {
@@ -23,6 +26,16 @@ export class PostController {
   @Get()
   findAll() {
     return this.postService.findAll();
+  }
+
+  @Get('/popular')
+  getPopularPosts() {
+    return this.postService.popular();
+  }
+
+  @Get('/search')
+  searchPosts(@Query() dto: SearchPostDto) {
+    return this.postService.search(dto);
   }
 
   @Get(':id')
