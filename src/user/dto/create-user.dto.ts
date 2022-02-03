@@ -1,5 +1,12 @@
+import { IsEmail, Length } from 'class-validator';
+
 export class CreateUserDto {
-    fullname: string;
-    email: string;
-    password?: string;
+  @Length(3)
+  fullname: string;
+
+  @IsEmail(undefined, { message: 'Неверная почта' })
+  email: string;
+
+  @Length(6, 32, { message: 'Пароль должен быть минимум 6 символов' })
+  password?: string;
 }
