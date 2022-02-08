@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -12,13 +16,14 @@ export class PostService {
     @InjectRepository(PostEntity)
     private repository: Repository<PostEntity>,
   ) {}
-  create(dto: CreatePostDto) {
+  create(dto: CreatePostDto, userId: number) {
     const firstParagraph = dto.body.find((obj) => obj.type === 'paragraph')
       ?.data?.text;
     return this.repository.save({
       title: dto.title,
       body: dto.body,
       tags: dto.tags,
+      user: { id: userId },
       description: firstParagraph || '',
     });
   }
@@ -45,17 +50,24 @@ export class PostService {
 
   async search(dto: SearchPostDto) {
     const qb = this.repository.createQueryBuilder('p');
+
+    qb.leftJoinAndSelect('p.user', 'user');
+
     qb.limit(dto.limit || 0);
-    qb.limit(dto.take || 10);
+    qb.take(dto.take || 10);
+
     if (dto.views) {
       qb.orderBy('views', dto.views);
     }
+
     if (dto.body) {
       qb.andWhere(`p.body ILIKE :body`);
     }
+
     if (dto.title) {
       qb.andWhere(`p.title ILIKE :title`);
     }
+
     if (dto.tag) {
       qb.andWhere(`p.tags ILIKE :tag`);
     }
@@ -66,7 +78,9 @@ export class PostService {
       tag: `%${dto.tag}%`,
       views: dto.views || '',
     });
+
     const [items, total] = await qb.getManyAndCount();
+
     return { items, total };
   }
 
@@ -83,7 +97,7 @@ export class PostService {
     return this.repository.findOne(id);
   }
 
-  async update(id: number, dto: UpdatePostDto) {
+  async update(id: number, dto: UpdatePostDto, userId: number) {
     const find = await this.repository.findOne(+id);
 
     if (!find) {
@@ -97,14 +111,18 @@ export class PostService {
       title: dto.title,
       body: dto.body,
       tags: dto.tags,
+      user: { id: userId },
       description: firstParagraph || '',
     });
   }
 
-  async remove(id: number) {
+  async remove(id: number, userId: number) {
     const find = await this.repository.findOne(+id);
     if (!find) {
       throw new NotFoundException('Статья не найдена');
+    }
+    if (find.user.id !== userId) {
+      throw new ForbiddenException('Нет доступа к этой статье');
     }
     return this.repository.delete(id);
   }

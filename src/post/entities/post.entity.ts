@@ -1,9 +1,11 @@
+import { UserEntity } from 'src/user/entities/user.entity';
 import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
 } from 'typeorm';
 import { OutputBlockData } from '../dto/create-post.dto';
 
@@ -20,6 +22,9 @@ export class PostEntity {
 
   @Column()
   description: string;
+
+  @ManyToOne(() => UserEntity, { eager: true })
+  user: UserEntity;
 
   @Column({
     default: 0,
