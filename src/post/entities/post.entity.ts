@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { OutputBlockData } from '../dto/create-post.dto';
 
 @Entity('posts')
 export class PostEntity {
@@ -14,8 +15,11 @@ export class PostEntity {
   @Column()
   title: string;
 
+  @Column({ type: 'jsonb' })
+  body: OutputBlockData[];
+
   @Column()
-  body: string;
+  description: string;
 
   @Column({
     default: 0,
